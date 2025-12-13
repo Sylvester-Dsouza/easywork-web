@@ -48,7 +48,7 @@ export async function GET() {
       _count: true,
     });
 
-    const thisMonthTotal = monthlyStats.reduce((acc, stat) => acc + stat._count, 0);
+    const thisMonthTotal = monthlyStats.reduce((acc: number, stat: any) => acc + stat._count, 0);
     const lastMonthTotal = lastMonthStats._count || 0;
     const percentChange = lastMonthTotal > 0 
       ? Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100)
@@ -58,9 +58,12 @@ export async function GET() {
       recentLogs: usageLogs,
       monthlyStats: {
         total: thisMonthTotal,
-        success: monthlyStats.find(s => s.status === 'success')?._count || 0,
-        failed: monthlyStats.find(s => s.status === 'failed')?._count || 0,
-        rowsProcessed: monthlyStats.reduce((acc, s) => acc + (s._sum.rowsProcessed || 0), 0),
+        success: monthlyStats.find((s: any) => s.status === 'success')?._count || 0,
+        failed: monthlyStats.find((s: any) => s.status === 'failed')?._count || 0,
+        rowsProcessed: monthlyStats.reduce(
+          (acc: number, s: any) => acc + (s._sum.rowsProcessed || 0),
+          0,
+        ),
       },
       percentChange,
     });
