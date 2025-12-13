@@ -30,7 +30,7 @@ export async function GET() {
     });
 
     // Return masked keys
-    const maskedKeys = apiKeys.map(key => ({
+    const maskedKeys = apiKeys.map((key: { id: string; provider: string; encryptedKey: string; createdAt: Date; updatedAt: Date }) => ({
       id: key.id,
       provider: key.provider,
       maskedKey: maskKey(decryptKey(key.encryptedKey)),
