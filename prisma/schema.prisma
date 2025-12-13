@@ -1,0 +1,81 @@
+// Prisma Schema for Easyworks SheetGPT
+// Using Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model Profile {
+  id                    String    @id @default(uuid()) @db.Uuid
+  email                 String    @unique
+  fullName              String?   @map("full_name")
+  avatarUrl             String?   @map("avatar_url")
+  plan                  Plan      @default(FREE)
+  requestsUsed          Int       @default(0) @map("requests_used")
+  requestsLimit         Int       @default(100) @map("requests_limit")
+  billingCycleStart     DateTime? @default(now()) @map("billing_cycle_start")
+  stripeCustomerId      String?   @map("stripe_customer_id")
+  stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  apiKeys    ApiKey[]
+  usageLogs  UsageLog[]
+
+  @@index([email], map: "Profiles_email_idx")
+  @@map("Profiles")
+}
+
+model ApiKey {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  provider     Provider
+  encryptedKey String   @map("encrypted_key")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider], map: "ApiKeys_userId_provider_key")
+  @@index([userId], map: "ApiKeys_userId_idx")
+  @@map("ApiKeys")
+}
+
+model UsageLog {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  action        String
+  rowsProcessed Int         @default(0) @map("rows_processed")
+  provider      String
+  model         String
+  status        UsageStatus
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "UsageLogs_userId_idx")
+  @@index([createdAt], map: "UsageLogs_createdAt_idx")
+  @@map("UsageLogs")
+}
+
+enum Plan {
+  FREE      @map("free")
+  PRO       @map("pro")
+  TEAM      @map("team")
+  ENTERPRISE @map("enterprise")
+}
+
+enum Provider {
+  OPENAI    @map("openai")
+  ANTHROPIC @map("anthropic")
+  GEMINI    @map("gemini")
+}
+
+enum UsageStatus {
+  SUCCESS @map("success")
+  FAILED  @map("failed")
+}
