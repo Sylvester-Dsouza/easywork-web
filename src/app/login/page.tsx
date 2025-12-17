@@ -8,6 +8,8 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useState } from "react";
 
+import { getURL } from "@/lib/utils";
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${getURL()}auth/callback`,
       },
     });
   };
