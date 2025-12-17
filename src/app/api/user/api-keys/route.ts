@@ -1,15 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-
-// Simple encryption for API keys (in production, use proper encryption)
-function encryptKey(key: string): string {
-  return Buffer.from(key).toString('base64');
-}
-
-function decryptKey(encrypted: string): string {
-  return Buffer.from(encrypted, 'base64').toString('utf-8');
-}
+import { encrypt, decrypt } from '@/lib/encryption';
 
 function maskKey(key: string): string {
   if (key.length <= 8) return '••••••••';
@@ -33,7 +25,7 @@ export async function GET() {
     const maskedKeys = apiKeys.map((key: { id: string; provider: string; encryptedKey: string; createdAt: Date; updatedAt: Date }) => ({
       id: key.id,
       provider: key.provider,
-      maskedKey: maskKey(decryptKey(key.encryptedKey)),
+      maskedKey: maskKey(decrypt(key.encryptedKey)),
       createdAt: key.createdAt,
       updatedAt: key.updatedAt,
     }));
@@ -73,12 +65,12 @@ export async function POST(request: Request) {
         },
       },
       update: {
-        encryptedKey: encryptKey(apiKey),
+        encryptedKey: encrypt(apiKey),
       },
       create: {
         userId: user.id,
         provider: provider,
-        encryptedKey: encryptKey(apiKey),
+        encryptedKey: encrypt(apiKey),
       },
     });
 

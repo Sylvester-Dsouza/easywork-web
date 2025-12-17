@@ -7,6 +7,7 @@ import { Navbar } from "@/components/navbar";
 import { Sparkles, Loader2, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 import { useState } from "react";
+import { getURL } from "@/lib/utils";
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function SignupPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${getURL()}auth/callback`,
       },
     });
   };

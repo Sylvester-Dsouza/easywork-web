@@ -1,27 +1,33 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import { decrypt } from '@/lib/encryption';
+import { Prisma } from '@prisma/client';
 
 // This endpoint is called by the Google Sheets addon to sync data
 // It uses the user's email to identify them (from Google OAuth in the addon)
 
+type ProfileWithKeys = Prisma.ProfileGetPayload<{
+  include: { apiKeys: true }
+}>;
+
 export async function POST(request: Request) {
   try {
-    const { email, action, provider, model, rowsProcessed, status } = await request.json();
+    const { connectToken, action, provider, model, rowsProcessed, status } = await request.json();
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!connectToken) {
+      return NextResponse.json({ error: 'Connect Token is required' }, { status: 401 });
     }
 
-    // Find user by email
+    // Find user by connectToken
     const profile = await prisma.profile.findUnique({
-      where: { email },
+      where: { connectToken } as any,
       include: {
         apiKeys: true,
       },
-    });
+    }) as ProfileWithKeys | null;
 
     if (!profile) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Invalid Connect Token' }, { status: 401 });
     }
 
     // Check usage limits
@@ -71,27 +77,27 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
+    const connectToken = searchParams.get('token');
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!connectToken) {
+      return NextResponse.json({ error: 'Connect Token is required' }, { status: 401 });
     }
 
     const profile = await prisma.profile.findUnique({
-      where: { email },
+      where: { connectToken } as any,
       include: {
         apiKeys: true,
       },
-    });
+    }) as ProfileWithKeys | null;
 
     if (!profile) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Invalid Connect Token' }, { status: 401 });
     }
 
     // Decrypt API keys for the addon
     const apiKeys: Record<string, string> = {};
     for (const key of profile.apiKeys) {
-      apiKeys[key.provider] = Buffer.from(key.encryptedKey, 'base64').toString('utf-8');
+      apiKeys[key.provider] = decrypt(key.encryptedKey);
     }
 
     return NextResponse.json({

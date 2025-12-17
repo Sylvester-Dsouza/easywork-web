@@ -20,6 +20,7 @@ model Profile {
   billingCycleStart     DateTime? @default(now()) @map("billing_cycle_start")
   stripeCustomerId      String?   @map("stripe_customer_id")
   stripeSubscriptionId  String?   @map("stripe_subscription_id")
+  connectToken          String?   @unique @map("connect_token")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
