@@ -2,10 +2,12 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getURL } from '@/lib/utils';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/dashboard';
 
   if (code) {
@@ -65,10 +67,14 @@ export async function GET(request: Request) {
         }
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      const baseUrl = getURL();
+      // Ensure we don't have double slashes if next starts with /
+      const redirectPath = next.startsWith('/') ? next.slice(1) : next;
+      return NextResponse.redirect(`${baseUrl}${redirectPath}`);
     }
   }
 
   // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  const baseUrl = getURL();
+  return NextResponse.redirect(`${baseUrl}login?error=auth_failed`);
 }
